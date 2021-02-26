@@ -25,7 +25,7 @@ int main() {
     }
 
     if (child_pid == 0) { // Child
-        short num; // short, to handle the -1 properly cuz char doesn't
+        int num; // short, to handle the -1 properly cuz char doesn't
 
         // Read character from keyboard input, and write it to child -> parent pipe
         do {
