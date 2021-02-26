@@ -25,7 +25,7 @@ int main() {
     }
 
     if (child_pid == 0) { // Child
-        int num; // short, to handle the -1 properly cuz char doesn't
+        short num; // short, to handle the -1 properly cuz char doesn't
 
         // Read character from keyboard input, and write it to child -> parent pipe
         do {
@@ -42,7 +42,7 @@ int main() {
 
         exit(0);
     } else { // Parent
-        char num;
+        signed char num; // specify signed, because on ARM, char is unsigned by default
 
         // Read character from child -> parent pipe, and add it to buffer
         do {
