@@ -11,9 +11,8 @@ volatile int phase_num = 1;
 volatile int threads_done = 0;
 pthread_mutex_t mtx;
 pthread_cond_t cndvr;
-// pthread_barrier_t phase_bar;
 
-// PRINT ARRAY
+// print array
 void printArray() {
     for (auto row : square) {
         for (int j = 0; j < 4; j++) {
@@ -24,12 +23,14 @@ void printArray() {
     std::cout << "\n";
 }
 
+// swapping for bubble sort
 void swap(volatile int *a, volatile int *b) {
     int temp = *a;
     *a = *b;
     *b = temp;
 }
 
+// bubble sort
 void sort(int i, int j) {
 	if (j % 2 != 0) { // Row sort
 		if (i % 2 == 0) { // Increasing order
@@ -89,16 +90,16 @@ void *thread_work(void *index) {
 	int i = *((int *) index);
 
 	while (phase_num <= NUM_PHASES) {		
-		sort(i, phase_num);
+		sort(i, phase_num); // sorts the row/column
 
 		pthread_mutex_lock(&mtx);
-		if (++threads_done > 3) {
-			phase_num++;
-			threads_done = 0;
-			printArray();
-			pthread_cond_broadcast(&cndvr);
-		} else if (threads_done > 0) {
-			pthread_cond_wait(&cndvr, &mtx);	
+		if (++threads_done > 3) { // checks if the thread is the last thread completed in the phase
+			phase_num++; // increment phase number
+			threads_done = 0; // reset number of threads completed for next phase
+			printArray(); // print array at end of phase
+			pthread_cond_broadcast(&cndvr); // signal other threads to wake
+		} else if (threads_done > 0) { // if not the last thread
+			pthread_cond_wait(&cndvr, &mtx); // wait for pthread_cond_broadcast
 		} pthread_mutex_unlock(&mtx);
 	}
 
@@ -121,11 +122,9 @@ int main() {
     // 2. Print integers
 	printArray();
 
-
     // 3. Init condition variables
     pthread_mutex_init(&mtx, nullptr);
     pthread_cond_init(&cndvr, nullptr);
-    // pthread_barrier_init(&phase_bar, nullptr, N);
 
     // 4. Create threads
     pthread_t threads[N];
@@ -140,19 +139,14 @@ int main() {
         *arg = j;
         pthread_create(&threads[j], nullptr, thread_work, arg);
     }
-    // pthread_cond_signal(&cndvr);
 
     // Wait for all phases
     for (pthread_t thread : threads) {
         pthread_join(thread, nullptr);
     }
 
-    // Print final array
-    // printArray();
-
     // Cleanup
     pthread_mutex_destroy(&mtx);
     pthread_cond_destroy(&cndvr);
-    // pthread_barrier_destroy(&phase_bar);
     return 0;
 }
