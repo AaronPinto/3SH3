@@ -5,6 +5,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <sys/mman.h>
 
 int main() {
     // 1. read array from file
