@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
         if (offset + length > sb.st_size) {
             length = sb.st_size - offset;
         }
-        /* Canaqt display bytes past end of file */
+        /* Cannot display bytes past end of file */
     } else { /* No length arg ==> display to end of file */
         length = sb.st_size - offset;
     }
