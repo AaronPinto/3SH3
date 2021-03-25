@@ -9,10 +9,10 @@
 #include <cstdlib>
 #include <sys/sem.h>
 
-#define handle_error(msg)   \
-    do {                    \
-        perror(msg);        \
-        exit(EXIT_FAILURE); \
+#define handle_error(msg)                                                                                                                  \
+    do {                                                                                                                                   \
+        perror(msg);                                                                                                                       \
+        exit(EXIT_FAILURE);                                                                                                                \
     } while (0)
 
 // Used in calls to semctl()
