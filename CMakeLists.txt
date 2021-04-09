@@ -9,7 +9,7 @@ file(GLOB LAB1 "Lab 1/*.h" "Lab 1/*.cpp")
 file(GLOB LAB2 "Lab 2/*.h" "Lab 2/*.cpp")
 file(GLOB LAB3 "Lab 3/*.h" "Lab 3/*.cpp")
 file(GLOB LAB4 "Lab 4/*.h" "Lab 4/*.cpp")
-file(GLOB LAB5 "Lab 5/*.h" "Lab 5/*.cpp")
+file(GLOB LAB5 "Lab 5/*.h" "Lab 5/main.cpp")
 
 add_executable(3SH3 ${LAB5})
 target_link_libraries(3SH3 PRIVATE Threads::Threads)
