@@ -1,6 +1,10 @@
 //
 // Created by aaron on 2021-04-05.
 //
+#define GREEN "\x1B[1;32m"
+#define CYAN "\x1B[1;36m"
+#define NORMAL_COLOUR "\x1B[0m"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -12,22 +16,58 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void print_attrs(struct stat &sb, const char *pathname) {
-    printf("Mode: %lo (octal)\t\t", (unsigned long) sb.st_mode);
-    printf("Link count: %ld\t", (long) sb.st_nlink);
-    printf("Owner's name: %s\t", getpwuid(sb.st_uid)->pw_name);
-    printf("Group name: %s\t", getgrgid(sb.st_gid)->gr_name);
-    printf("File size: %lld bytes\t\t", (long long) sb.st_size);
-    printf("Blocks allocated: %lld\t", (long long) sb.st_blocks);
+void print_dir_attrs(const char *pathname, struct stat &sb) {
+    printf("%s", NORMAL_COLOUR);
+    printf("%sMode: %6lo   ", GREEN, (unsigned long) sb.st_mode);
+    printf("%sLink count: %-4ld", GREEN, (long) sb.st_nlink);
+    printf("%sOwner's name: %-8s", GREEN, getpwuid(sb.st_uid)->pw_name);
+    printf("%sGroup name: %-8s", GREEN, getgrgid(sb.st_gid)->gr_name);
+    printf("%sFile size: %6lld bytes   ", GREEN, (long long) sb.st_size);
+    printf("%sBlocks allocated: %-6lld", GREEN, (long long) sb.st_blocks);
 
     char buf[200];
     strftime(buf, sizeof(buf), "%b %e %H:%M", localtime(&sb.st_mtime));
-    printf("Last file modification: %s\t", buf);
+    printf("%sLast file modification: %-15s", GREEN, buf);
 
-    printf("Name: %s\n", basename(strdup(pathname)));
+    printf("%sName: %s\n", GREEN, basename(strdup(pathname)));
+    printf("%s", NORMAL_COLOUR);
 }
 
-void list_dir(char *pathname, struct stat &sb, int indent) {
+void print_sym_attrs(const char *pathname, struct stat &sb) {
+    printf("%s", NORMAL_COLOUR);
+    printf("%sMode: %6lo   ", CYAN, (unsigned long) sb.st_mode);
+    printf("%sLink count: %-4ld", CYAN, (long) sb.st_nlink);
+    printf("%sOwner's name: %-8s", CYAN, getpwuid(sb.st_uid)->pw_name);
+    printf("%sGroup name: %-8s", CYAN, getgrgid(sb.st_gid)->gr_name);
+    printf("%sFile size: %6lld bytes   ", CYAN, (long long) sb.st_size);
+    printf("%sBlocks allocated: %-6lld", CYAN, (long long) sb.st_blocks);
+
+    char buf[200];
+    strftime(buf, sizeof(buf), "%b %e %H:%M", localtime(&sb.st_mtime));
+    printf("%sLast file modification: %-15s", CYAN, buf);
+
+    printf("%sName: %s\n", CYAN, basename(strdup(pathname)));
+    printf("%s", NORMAL_COLOUR);
+}
+
+void print_file_attrs(const char *pathname, struct stat &sb) {
+    printf("%s", NORMAL_COLOUR);
+    printf("Mode: %6lo   ", (unsigned long) sb.st_mode);
+    printf("Link count: %-4ld", (long) sb.st_nlink);
+    printf("Owner's name: %-8s", getpwuid(sb.st_uid)->pw_name);
+    printf("Group name: %-8s", getgrgid(sb.st_gid)->gr_name);
+    printf("File size: %6lld bytes   ", (long long) sb.st_size);
+    printf("Blocks allocated: %-6lld", (long long) sb.st_blocks);
+
+    char buf[200];
+    strftime(buf, sizeof(buf), "%b %e %H:%M", localtime(&sb.st_mtime));
+    printf("Last file modification: %-15s", buf);
+
+    printf("Name: %s\n", basename(strdup(pathname)));
+    printf("%s", NORMAL_COLOUR);
+}
+
+void list_dir(const char *pathname, struct stat &sb) {
     DIR *dir;
     char *cwd;
 
@@ -38,7 +78,8 @@ void list_dir(char *pathname, struct stat &sb, int indent) {
 
     switch (sb.st_mode & S_IFMT) {
         case S_IFDIR:
-            print_attrs(sb, pathname);
+            printf("\n");
+            print_dir_attrs(pathname, sb);
 
             if (!(dir = opendir(pathname))) {
                 perror("opendir");
@@ -51,6 +92,7 @@ void list_dir(char *pathname, struct stat &sb, int indent) {
             }
 
             while (struct dirent *entry = readdir(dir)) {
+                // Check if it's current dir or parent dir
                 if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
                     continue;
                 }
@@ -62,15 +104,17 @@ void list_dir(char *pathname, struct stat &sb, int indent) {
                 strcat(full_path, "/");
                 strcat(full_path, entry->d_name);
 
-                list_dir(full_path, sb, indent + 4);
+                list_dir(full_path, sb);
             }
 
             chdir("..");
             closedir(dir);
             break;
         case S_IFLNK:
+            print_sym_attrs(pathname, sb);
+            break;
         case S_IFREG:
-            print_attrs(sb, pathname);
+            print_file_attrs(pathname, sb);
             break;
         default:
             break;
@@ -79,7 +123,6 @@ void list_dir(char *pathname, struct stat &sb, int indent) {
 
 int main(int argc, char *argv[]) {
     struct stat sb {};
-    int indent = 0;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
@@ -92,13 +135,14 @@ int main(int argc, char *argv[]) {
     }
 
     switch (sb.st_mode & S_IFMT) {
-        case S_IFDIR: {
-            list_dir(argv[1], sb, indent);
+        case S_IFDIR:
+            list_dir(argv[1], sb);
             break;
-        }
         case S_IFLNK:
+            print_sym_attrs(argv[1], sb);
+            break;
         case S_IFREG:
-            print_attrs(sb, argv[1]);
+            print_file_attrs(argv[1], sb);
             break;
         default:
             printf("type not supported\n");
